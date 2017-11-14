@@ -1,11 +1,28 @@
+library(dplyr)
 
-
+## `read_features` reads the features.txt file as a blank space delimited file
+##
+## Argments:
+## 'path': Path to the root of the decompressed data
+## 'file': File name of the features file
+##
+## Features are the column names that will be used for the merged and
+## tidy data sets
 
 readfeatures <- function(path = "UCI HAR Dataset", file = "features.txt") {
         features <- read.delim(paste(path, file, sep="/"),
                                sep = " ",
                                header = FALSE)
 }
+
+## `read_activities` reads the features.txt file as a blank space delimited file
+##
+## Argments:
+## 'path': Path to the root of the decompressed data
+## 'file': File name of the features file
+##
+## Features are the column names that will be used for the merged and
+## tidy data sets
 
 readactivities <- function(path = "UCI HAR Dataset", file = "activity_labels.txt") {
         activities <- read.delim(paste(path, file, sep="/"), 
@@ -41,7 +58,7 @@ readactivities <- function(path = "UCI HAR Dataset", file = "activity_labels.txt
 ## - data columns: if selcolumns argument is set to TRUE (default), the mean and std columns, else
 ##                 all columns read are part of the dataframe
 
-readdataset <- function(set, path, features, selcolumns = TRUE) {
+readdataset <- function(set, path, featlabels, selcolumns = TRUE) {
         
         ## path and file name character transformations
         path <- paste(path, set, sep = "/")
@@ -58,13 +75,7 @@ readdataset <- function(set, path, features, selcolumns = TRUE) {
         
         fwf <- rep(colwidth, numcols)
         dataset <- read.fwf(xfile, widths = fwf, header = FALSE)
-        
-        ## 'features' contains the labels for each column. Those column names are passed
-        ## as a function argument
-        featlabels <- sapply(features[,2], as.character)
-        names(dataset) <-  featlabels
-        
-        if (selcolumns) dataset <- dataset[, grep ("-(mean|std)\\(\\)", featlabels)]
+        names(dataset) <- featlabels
         
         ydata  <- read.delim(yfile, sep = " ", header = FALSE)
         names(ydata)   <- ("activity_id")
@@ -73,28 +84,32 @@ readdataset <- function(set, path, features, selcolumns = TRUE) {
         names(sdata)   <- ("subject_id")
 
         ## subject_id and activity_id columns are prepended to the measurement data
-        cbind(sdata, ydata, dataset)
+        dataset <- cbind(sdata, ydata, dataset)
+        
+        dataset
 }
 
-colextract <- function(set, features) {
 
-}
-
+## 'tidydataset' tidies up the dataset passed as argument
 tidydataset <- function(ds) {
         
-        library(reshape2)
-        
-        cn <- colnames(ds)
-        colvars <- c("activity_id", "activity", "subject_id", "set")
-        msrvars <- grep ("(-(mean|std)\\(\\))", colnames(ds), value = TRUE)
+        colvars <- c("activity", "subject_id", "set")
+        msrvars <- grep ("-(mean|std)\\(\\)-[XYZ]$", colnames(ds), value = TRUE)
+
         ds <- melt(ds, id.vars = colvars, measure.vars = msrvars, value.name = "value")
         
+        ds$origin <- rep("ACCELEROMETER", nrow(ds))
+        index <- grep ("[a-z]Gyro", ds$variable)
+        ds$origin[index] <- c("GYROSCOPE")
+        
         ## Once melt, the dataset is grouped by 'subject_id', 'activity_id', and the "mean"
-        ## function is applied to each variables
+        ## function is applied to each variable
         
         tds <- (rename(ds, feature = variable) %>%
-                group_by(subject_id, activity, feature) %>%
-                summarise(mean = mean(value)))
+                group_by(subject_id, set, activity, feature, origin) %>%
+                summarise(mean = mean(value))) 
+        
+        
 }
 
 ## `run_analysis` does the following:
@@ -132,9 +147,10 @@ run_analysis <- function() {
         
         activities <- readactivities(path)
         features   <- readfeatures(path)
+        featlabels <- sapply(features[,2], as.character)
         
-        test  <- readdataset("test",  path, features)
-        train <- readdataset("train", path, features)
+        test  <- readdataset("test",  path, featlabels)
+        train <- readdataset("train", path, featlabels)
         
         set <- factor(c(rep(1, nrow(test)), rep(2, nrow(train))), labels=c("TEST", "TRAIN"))
         names(set) <- "set_id"
@@ -142,9 +158,15 @@ run_analysis <- function() {
         dataset <- cbind(set, rbind(test, train))
         
         dataset <- merge(activities, dataset)
-
-        #tidyds <- tidydataset(dataset)
         
-        write.table(tidyds, "tidy_dataset.txt", row.name=FALSE)
+        ## Only the data columns ending in -mean() or -std() are extracted
+        ## 'features' contains the labels for each column. Those column names are passed
+        ## as a function argument
+       
+        dataset <- dataset[, c(1:4,  grep ("-(mean|std)\\(\\)-[XYZ]$", names(dataset)))]
+
+        tidyds <- tidydataset(dataset)
+        
+        write.table(tidyds, "tidy_dataset.txt", row.names = FALSE)
         tidyds
 }
