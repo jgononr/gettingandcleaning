@@ -1,4 +1,5 @@
 library(dplyr)
+library(reshape2)
 
 ## `read_features` reads the features.txt file as a blank space delimited file
 ##
@@ -91,25 +92,40 @@ readdataset <- function(set, path, featlabels, selcolumns = TRUE) {
 
 
 ## 'tidydataset' tidies up the dataset passed as argument
-tidydataset <- function(ds) {
+tidydataset <- function(tds) {
         
         colvars <- c("activity", "subject_id", "set")
-        msrvars <- grep ("-(mean|std)\\(\\)-[XYZ]$", colnames(ds), value = TRUE)
+        msrvars <- grep ("-(mean|std)\\(\\)-[XYZ]$", colnames(tds), value = TRUE)
 
-        ds <- melt(ds, id.vars = colvars, measure.vars = msrvars, value.name = "value")
+        tds <- melt(tds, id.vars = colvars, measure.vars = msrvars, value.name = "value")
         
-        ds$origin <- rep("ACCELEROMETER", nrow(ds))
-        index <- grep ("[a-z]Gyro", ds$variable)
-        ds$origin[index] <- c("GYROSCOPE")
+        ## Once melt, the 'variable' column is renamed to 'feature', the dataset is grouped by 
+        ## 'subject_id', 'activity_id', 'origin' 
+        ## and summarised using the "mean" function to each group
         
-        ## Once melt, the dataset is grouped by 'subject_id', 'activity_id', and the "mean"
-        ## function is applied to each variable
-        
-        tds <- (rename(ds, feature = variable) %>%
-                group_by(subject_id, set, activity, feature, origin) %>%
+        tds <- (rename(tds, feature = variable) %>%
+                group_by(subject_id, set, activity, feature) %>%
                 summarise(mean = mean(value))) 
         
+        ## Axis observation is split between rows, thus same variables being stored in different rows
+        tds <- ungroup(tds)
+        tds.axis <- sapply(tds$feature, function(str) substr(str, str_length(str), str_length(str)))
+        tds$axis <- tds.axis
+        tds <- mutate(tds, feature = sub("\\(\\)-[XYZ]", "", tds$feature))
+        tds <- dcast(tds, subject_id + set + activity + feature ~ axis, value.var = "mean")
+
+        ## The 'variable' column values are the column names. Each column name
+        ## stores some other variables as the measurement source (accel/gyro) that
+        ## is added to the tidy dataset.
         
+        tds$origin <- rep("ACCELEROMETER", nrow(tds))
+        index <- grep ("[a-z]Gyro", tds$feature)
+        tds$origin[index] <- c("GYROSCOPE")
+        
+        tds$domain <- rep("TIME", nrow(tds))
+        index <- grep ("^f", tds$feature)
+        tds$domain[index] <- c("FREQUENCY")
+        tds
 }
 
 ## `run_analysis` does the following:
@@ -170,3 +186,6 @@ run_analysis <- function() {
         write.table(tidyds, "tidy_dataset.txt", row.names = FALSE)
         tidyds
 }
+
+
+## Coge el "eje" de la medición: sapply(x$feature, function(str) substr(str, str_length(str), str_length(str)))
