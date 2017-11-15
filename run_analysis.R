@@ -105,7 +105,7 @@ tidydataset <- function(tds) {
         
         tds <- (rename(tds, feature = variable) %>%
                 group_by(subject_id, set, activity, feature) %>%
-                summarise(mean = mean(value))) 
+                summarise(mean = mean(value)))
         
         ## Axis observation is split between rows, thus same variables being stored in different rows
         tds <- ungroup(tds)
@@ -121,6 +121,8 @@ tidydataset <- function(tds) {
         tds$origin <- rep("ACCELEROMETER", nrow(tds))
         index <- grep ("[a-z]Gyro", tds$feature)
         tds$origin[index] <- c("GYROSCOPE")
+        
+        ## And also the measurement's domain
         
         tds$domain <- rep("TIME", nrow(tds))
         index <- grep ("^f", tds$feature)
