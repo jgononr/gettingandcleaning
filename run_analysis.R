@@ -1,5 +1,6 @@
 library(dplyr)
 library(reshape2)
+library(stringr)
 
 ## `read_features` reads the features.txt file as a blank space delimited file
 ##
