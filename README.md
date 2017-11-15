@@ -61,8 +61,6 @@ As for the test and training datasets folders, both of them contain three files:
 
 Given a set (test/training) the complete information is built using the 3 set files to identify which measurement is related to which subject and activity. Each measurement value is identified by the features order of labels.
 
-## Data transformations
-
 ### Constructing the dataset
 
 After reading the deatures and activities files, the actual data set are read. The X_<set>.txt file is the actual data fomatted in 561 fields of 16-character width. Each column is named using the feature
@@ -118,18 +116,18 @@ The output dataset is considered tidy data as long as:
 
 Nevertheless, input data had some problems that had to be solved beforehand to get a tidy dataset.
 
-These were the following:
 #### Column headers were values, not variable names
 
 Each measurement column name was referring to the variable "measurement" or "feature", the latter being used to maintain coherence with file names. Each value on each column was the "value" for each "feature".
 
 From the original data frame:
-|activity_id|activity|set_id|subject_id|tBodyAcc-mean()-X|tBodyAcc-mean()-Y| (...) | tGravityAcc-std()-Z  |
-|:----------|:------:|:----:|:--------:|:---------------:|:---------------:|:-----:|:--------------------:|
-|1          |LAYING  |TEST  |1         |\<value\>        |\<value\>        |(...)  |\<value\>             |
-|1          |LAYING  |TEST  |1         |\<value\>        |\<value\>        |(...)  |\<value\>             |
-|(...)      |(...)   |(...) |(...)     |(...)            |(...)            |(...)  |(...)                 |
-|6          |WALKING_UPSTAIRS   |TRAIN   |\<value\>    |\<value\>            |\<value\>            |\<value\>  |\<value\>|
+
+|activity_id|activity           |set_id|subject_id|tBodyAcc-mean()-X|tBodyAcc-mean()-Y| (...) | tGravityAcc-std()-Z  |
+|:----------|:-----------------:|:----:|:--------:|:---------------:|:---------------:|:-----:|:--------------------:|
+|1          |LAYING             |TEST  |1         |\<value\>        |\<value\>        |(...)  |\<value\>             |
+|1          |LAYING             |TEST  |1         |\<value\>        |\<value\>        |(...)  |\<value\>             |
+|(...)      |(...)              |(...) |(...)     |(...)            |(...)            |(...)  |(...)                 |
+|6          |WALKING_UPSTAIRS   |TRAIN |\<value\> |\<value\         |\<value\>        |(...)  |\<value\>             |
 
 It's melted to get all the features columns (tBodyAcc-mean()-X, tBodyAcc-mean-Y,...) and substitute them with 2 columns, feature and value as follows:
 
