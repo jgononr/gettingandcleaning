@@ -189,6 +189,3 @@ run_analysis <- function() {
         write.table(tidyds, "tidy_dataset.txt", row.names = FALSE)
         tidyds
 }
-
-
-## Coge el "eje" de la medición: sapply(x$feature, function(str) substr(str, str_length(str), str_length(str)))
