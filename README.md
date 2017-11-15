@@ -72,7 +72,10 @@ After these transformations, the data set is as follows:
 
 |subject_id|activity_id|tBodyAcc-mean()-X|tBodyAcc-mean()-Y| (...) | angle(Z,gravityMean) |
 |:--------:|:---------:|:---------------:|:---------------:|:-----:|:--------------------:|
-|1|1|<value>|<value>|(...)|<value>|
+|1|1|\<value\>|\<value\>|(...)|\<value\>|
+|1|1|\<value\>|\<value\>|(...)|\<value\>|
+|(...)|(...)|(...)|(...)|(...)|(...)
+|29|6|\<value\>|\<value\>|(...)|\<value\>|
 
 The 'readdataset' functions is used to read each set, having one for each set. Each set contains an
 implicit variable that is set the data belongs to. As we want to merge both datasets without losing
@@ -91,10 +94,10 @@ As the activities should have descriptive names, a merge is done between the act
 
 |activity_id|activity|set_id|subject_id|tBodyAcc-mean()-X|tBodyAcc-mean()-Y| (...) | angle(Z,gravityMean) |
 |:----------|:------:|:----:|:--------:|:---------------:|:---------------:|:-----:|:--------------------:|
-|1          |LAYING  |TEST  |1         |\<value\>          |\<value\>          |(...)  |\<value\>|
-|TEST|1|1|\<value\>|\<value\>|(...)|\<value\>|
-|(...) |(...)     |(...)      |(...)            |(...)            |(...)  |(...)|
-|TRAIN |\<value\>   |\<value\>    |\<value\>            |\<value\>            |\<value\>  |\<value\>|
+|1          |LAYING  |TEST  |1         |\<value\>        |\<value\>        |(...)  |\<value\>             |
+|1          |LAYING  |TEST  |1         |\<value\>        |\<value\>        |(...)  |\<value\>             |
+|(...)      |(...)   |(...) |(...)     |(...)            |(...)            |(...)  |(...)                 |
+|6          |WALKING_UPSTAIRS|TRAIN    |\<value\>        |\<value\>        |(...)  |\<value\>             |
 
 The assignment asks to extract the mean and standard deviation columns, so columns not ending in -std()-\<axis\> or -mean()-\<axis\> are discarded. The dataframe: 
 
@@ -170,7 +173,7 @@ To cast the melted data in such a way, a new column 'axis' is derived from the f
 
 As the axis is in a different column, the axis is trimmed from the 'feature' column:
 
-|activity|set   |subject_id|feature      |value|axis|
+|activity|set   |subject_id|feature          |value            |axis |
 |:------:|:----:|:--------:|:---------------:|:---------------:|:---:|
 |LAYING  |TEST  |1         |tBodyAcc-mean|\<summarised_value_X\>          |X|
 |LAYING  |TEST  |1         |tBodyAcc-mean|\<summarised_value_Y\>          |Y|
@@ -179,13 +182,13 @@ As the axis is in a different column, the axis is trimmed from the 'feature' col
 |(...)   |(...) |(...)     |(...)            |(...)               |(...)|
 |WALKING_UPSTAIRS  |TRAIN  |29         |tGravityAcc-std     |\<summarised_value_Z\>|Z|
 
-And now the dataset has 3 rows for the *same* feature and *different* axis. 'feature' has the same value in 3 rows, differring in the axis data. Data is rearranged and casted with axis to be unstacked using 'value' as the value for each new axis column:
+Now the dataset has 3 rows for the *same* feature and *different* axis. 'feature' has the same value in 3 rows, differring in the axis data. Data is rearranged and casted with axis to be unstacked using 'value' as the value for each new axis column:
 
-|subject_id|set   |activity  |feature          |X                |Y    |Z       |
-|:--------:|:----:|:--------:|:---------------:|:---------------:|:---:|:------:|
-|1         |TEST  |LAYING      |tBodyAcc-mean|\<summ_value_X\>|\<summ_value_Y\>|\<summd_value_Z\>|
-|(...)     |(...) |(...)     |(...)            |(...)|(...)|(...)|
-|29  |TRAIN  |WALKING_UPSTAIRS         |tGravityAcc-std    |\<summ_value_X\>|\<summ_value_Y\>|\<summ_value_Z\>|
+|subject_id|set   |activity        |feature        |X               |Y               |Z               |
+|:--------:|:----:|:--------------:|:-------------:|:--------------:|:--------------:|:--------------:|
+|1         |TEST  |LAYING          |tBodyAcc-mean  |\<summ_value_X\>|\<summ_value_Y\>|\<summ_value_Z\>|
+|(...)     |(...) |(...)           |(...)          |(...)           |(...)           |(...)           |
+|29       |TRAIN  |WALKING_UPSTAIRS|tGravityAcc-std|\<summ_value_X\>|\<summ_value_Y\>|\<summ_value_Z\>|
         
 #### Multiple variables are stored in one column
 As for the sensor origin , a new column 'origin' is used to split that data from the "feature" column. 'origin' can be one of "ACCELEROMETER" or "GYROSCOPE". This column is derived on the feature value depending on "Acc" or "Gyro" is contained in the value.
